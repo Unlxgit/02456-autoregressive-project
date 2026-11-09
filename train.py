@@ -15,13 +15,8 @@ def windowed_batch(batch, sequence_length=3, padding_value=0):
                               device=batch.device)
     batch_with_padding = torch.cat([left_padding, batch], dim=1)
 
-    return batch_with_padding.unfold(1,sequence_length,1)
+    return batch_with_padding.unfold(1,sequence_length,1)[:, :-1] # [:, :-1] cut out last one
 
-test_tensor = torch.tensor(np.array([[1, 2, 3, 5], [4, 5, 6, 10]]))
-
-print(windowed_batch(test_tensor))
-
-NUMBER_OF_AMINO_ACIDS = 20
 BATCH_SIZE = 32
 vocab_size = len(total_tokens)
 
@@ -33,11 +28,11 @@ class MLP(nn.Module):
         self.sequence_length = len(sequence)
 
         self.layers = nn.Sequential(
-            nn.Linear(input_dim * NUMBER_OF_AMINO_ACIDS, 32),
+            nn.Linear(50, 32),
             nn.ReLU(),
             nn.Linear(32,32), 
             nn.ReLU(),
-            nn.Linear(NUMBER_OF_AMINO_ACIDS,output_dim)
+            nn.Linear(vocab_size, output_dim)
         )
     
     def forward(self, token_ids):
@@ -131,8 +126,9 @@ test_loader = DataLoader(test_data, batch_size=BATCH_SIZE, shuffle=False)
 
 print(train_loader)
 
-net = MyRecurrentNet()
-net = MLP()
+# net = MyRecurrentNet()
+# net = MLP()
+# net =   
 optimizer = optim.Adam(net.parameters(), lr=0.001)
 criterion = nn.CrossEntropyLoss()
 
