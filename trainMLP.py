@@ -9,13 +9,14 @@ import numpy as np
 from src.protgen.models.mlp import MLP
 import torch.nn.functional as F
 import copy
+import matplotlib.pyplot as plt
 
 #Hyperparameters
 BATCH_SIZE = 32
 LEARNING_RATE = 1e-3
-EPOCHS = 10
-EMBEDDING_SIZE = 25
-HIDDEN_DIM = 64
+EPOCHS = 30
+EMBEDDING_SIZE = 60
+HIDDEN_DIM = 256
 
 #Load data
 train_data = ProteinDataset(path_to_data="data/train.csv")
@@ -32,6 +33,7 @@ model = MLP(vocab_size=total_tokens, embedding_dim=EMBEDDING_SIZE, hidden_dim=HI
 
 #Optimizer
 optimizer = torch.optim.AdamW(model.parameters(), lr=LEARNING_RATE)
+
 
 def compute_loss(model, input, target):
     raw_prediction = model(input)                                                   #Of size (B, 129, vocab_size)
@@ -66,6 +68,9 @@ def evaluate(model , dataloader):
 best_val_loss = float("inf")
 best_model_state = None
 
+train_losses = []
+val_losses = []
+
 for epoch in range(EPOCHS):
     model.train()
     training_loss = 0
@@ -93,6 +98,9 @@ for epoch in range(EPOCHS):
     mean_training_loss = training_loss / len(train_loader)
     mean_validation_loss = validation_loss / len(val_loader)
 
+    train_losses.append(mean_training_loss)
+    val_losses.append(mean_validation_loss)
+
     if validation_loss < best_val_loss:
         best_val_loss = validation_loss
         best_model_state = copy.deepcopy(model.state_dict())
@@ -112,6 +120,15 @@ print(f"\nbest val loss: {best_val_loss:.4f}")
 print(f"test loss:     {test_loss:.4f}")
 print(f"test accuracy: {test_accuracy:.1%}")
 print(f"test perplexity: {torch.exp(torch.tensor(test_loss)):.2f}")
+
+#Plot training and validation losses per epoch
+epoch = np.arange(len(train_losses))
+plt.plot(epoch, train_losses, 'ro-', label='Training loss')
+plt.plot(epoch, val_losses, 'bo-', label='Validation loss')
+plt.xlabel('Epoch')
+plt.ylabel('Loss')
+plt.legend()
+plt.show()
 
 
 
